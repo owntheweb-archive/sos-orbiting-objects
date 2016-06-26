@@ -73,12 +73,6 @@ aws.config.setPromisesDependency(require('promise')); //aws-sdk now supports pro
 // launch VM army
 var ec2 = new aws.EC2({apiVersion: '2015-10-01'});
 
-//////////
-// init //
-//////////
-
-var encryptedSecret = fs.readFileSync(tleSecretPath);
-
 //////////////////////////////
 // handle incoming requests //
 //////////////////////////////
@@ -115,22 +109,41 @@ var testRes = function(res) {
 // decrypt login info stored separately from this script
 var getTLESecret = function() {
 	return new Promise(function(resolve, reject) {
-		var kmsParams = {
-			CiphertextBlob: encryptedSecret
-		};
-		kms.decrypt(kmsParams, function(error, data) {
-			if (error) {
-				console.log('getTLESecret failed', error);
-				reject(error);
-			} else {
-				var decryptedString = data.Plaintext.toString('utf8');
-				var json = JSON.parse(decryptedString);
-				console.log('secret retreived');
-				resolve(json);
-			}
+		loadTLESecretFile().then(function(encryptedSecret) {
+			var kmsParams = {
+				CiphertextBlob: encryptedSecret
+			};
+			kms.decrypt(kmsParams, function(error, data) {
+				if (error) {
+					console.log('getTLESecret failed');
+					console.log(error);
+					reject(error);
+				} else {
+					var decryptedString = data.Plaintext.toString('utf8');
+					var json = JSON.parse(decryptedString);
+					console.log('secret retreived');
+					resolve(json);
+				}
+			});
 		});
 	});
-};	
+};
+
+//load the encrypted TLE login info
+var loadTLESecretFile = function() {
+	return new Promise(function(resolve, reject) {
+		//var encryptedSecret = fs.readFileSync(tleSecretPath);
+
+		fs.readFile(tleSecretPath, function(error, encryptedSecret) {
+		    if(error) {
+		    	console.log('loadTLESecretFile failed: ' + error);
+		    	reject(error);
+		    } else {
+		    	resolve(encryptedSecret);
+		    }
+		});
+	});
+}
 
 //get TLE data
 var getTLEs = function(secret) {
