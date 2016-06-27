@@ -10,9 +10,6 @@
 //currently hard coded as part of rendered animation + motion trail effects (1793 is final frame count at 30fps, 59.7 secs)
 let numFrames = 1812;
 
-//how many VMs should be launched to handle animation rendering (CAUTION: COSTS INVOLVED)
-let numVMs = 1;
-
 //which orbital object datasets to add to the queue
 let datasets = ['all','active','altitude'];
 
@@ -37,6 +34,12 @@ let satcatS3Bucket = tleS3Bucket;
 let satcatS3Key = 'data/satcat.txt';
 
 let sqsURL = 'https://sqs.us-east-1.amazonaws.com/631764164204/sosGenerateOrbitingObjects';
+
+let ec2NumVMs = 1; //how many VMs should be launched to handle animation rendering (CAUTION: COSTS INVOLVED)
+let ec2ImageID = 'ami-fce3c696'; // Ubuntu Server 14.04 LTS (HVM), SSD Volume Type
+let ec2InstanceType = 't2.small';
+let ec2SubnetID = 'subnet-e39e5a94'; //found this when setting up manually, gotta be a better way
+let ec2IamInstanceProfile = 'arn:aws:iam::YOURACCOUNTIDNUMBERINARN:instance-profile/sosDatasetGeneratorEC2';
 
 //////////////
 // includes //
@@ -73,6 +76,7 @@ aws.config.setPromisesDependency(require('promise')); //aws-sdk now supports pro
 // launch VM army
 var ec2 = new aws.EC2({apiVersion: '2015-10-01'});
 
+
 //////////////////////////////
 // handle incoming requests //
 //////////////////////////////
@@ -87,7 +91,7 @@ exports.handler = function (event, context) {
 			return deployVMArmy();
 		})
 		.then(function(status) {
-			console.log('Everything is set! ' + numVMs.toString() + ' VM(s) have been deployed to render dataset animations.');
+			console.log('Everything is set! ' + ec2NumVMs.toString() + ' VM(s) have been deployed to render dataset animations.');
 		})
 		.catch(function(error) {
 			console.log("exports.handler promise chain failed", error);
@@ -420,16 +424,16 @@ var deployVMArmy = function() {
 	return new Promise(function(resolve, reject) {
 		
 		var params = {
-			ImageId: 'ami-fce3c696', // Ubuntu Server 14.04 LTS (HVM), SSD Volume Type
-			InstanceType: 't2.small',
+			ImageId: ec2ImageID,
+			InstanceType: ec2InstanceType,
 			DryRun: false, //true to test but not do anything, will result in an error saying it would work
 			InstanceInitiatedShutdownBehavior: 'terminate',
-			SubnetId: 'subnet-e39e5a94', //found this when setting up manually, gotta be a better way
+			SubnetId: ec2SubnetID,
 			UserData: '',
 			IamInstanceProfile: {
-				Arn: 'arn:aws:iam::631764164204:instance-profile/sosDatasetGeneratorEC2'
+				Arn: ec2IamInstanceProfile
 			},
-			MinCount: 1, MaxCount: 1
+			MinCount: ec2NumVMs, MaxCount: ec2NumVMs
 		};
 
 		// Create the instance(s)
