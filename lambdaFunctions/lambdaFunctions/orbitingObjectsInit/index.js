@@ -66,9 +66,6 @@ var kms = new aws.KMS({region:'us-east-1'}); //match region as needed
 // simple queue service (SQS) to store data needed for individual animation frames
 var sqs = new aws.SQS({apiVersion: '2012-11-05'});
 
-// place to store large amounts of data as files
-var s3 = new aws.S3();
-
 // it flows better with promises
 var Promise = require('promise');
 aws.config.setPromisesDependency(require('promise')); //aws-sdk now supports promises!
