@@ -1,0 +1,21 @@
+{
+  "name": "orbiting-objects-init",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "aws-cli": "0.0.1",
+    "aws-sdk": "^2.4.0",
+    "limiter": "^1.1.0",
+    "promise": "^7.1.1",
+    "request": "^2.72.0"
+  },
+  "devDependencies": {
+    "lambda-local": "0.0.10"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Christopher Stevens <cstevens@spacefoundtion.org> (http://www.christopherstevens.cc)",
+  "license": "ISC"
+}
