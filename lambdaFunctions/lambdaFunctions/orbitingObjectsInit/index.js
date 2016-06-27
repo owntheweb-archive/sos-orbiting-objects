@@ -7,10 +7,10 @@
 // settings //
 //////////////
 
-//currently hard coded as part of rendered animation + motion trail effects (1793 is final frame count at 30fps, 59.7 secs)
+// currently hard coded as part of rendered animation + motion trail effects (1793 is final frame count at 30fps, 59.7 secs)
 let numFrames = 1812;
 
-//which orbital object datasets to add to the queue
+// which orbital object datasets to add to the queue
 let datasets = ['all','active','altitude'];
 
 let userAgent = 'SOS Dataset Generator (developer@spacefoundation.org)';
@@ -33,12 +33,12 @@ let satcatURL = 'http://celestrak.com/pub/satcat.txt';
 let satcatS3Bucket = tleS3Bucket;
 let satcatS3Key = 'data/satcat.txt';
 
-let sqsURL = 'https://sqs.us-east-1.amazonaws.com/631764164204/sosGenerateOrbitingObjects';
+let sqsURL = 'https://sqs.us-east-1.amazonaws.com/YOURACCOUNTIDNUMBERINARN/sosGenerateOrbitingObjects';
 
-let ec2NumVMs = 1; //how many VMs should be launched to handle animation rendering (CAUTION: COSTS INVOLVED)
+let ec2NumVMs = 1; // how many VMs should be launched to handle animation rendering (CAUTION: COSTS INVOLVED)
 let ec2ImageID = 'ami-fce3c696'; // Ubuntu Server 14.04 LTS (HVM), SSD Volume Type
 let ec2InstanceType = 't2.small';
-let ec2SubnetID = 'subnet-e39e5a94'; //found this when setting up manually, gotta be a better way
+let ec2SubnetID = 'subnet-e39e5a94'; // found this when setting up manually, gotta be a better way
 let ec2IamInstanceProfile = 'arn:aws:iam::YOURACCOUNTIDNUMBERINARN:instance-profile/sosDatasetGeneratorEC2';
 
 //////////////
@@ -103,7 +103,7 @@ exports.handler = function (event, context) {
 	}
 };
 
-//temporary test function
+// temporary test function
 var testRes = function(res) {
 	console.log(res);
 	return res;
@@ -132,7 +132,7 @@ var getTLESecret = function() {
 	});
 };
 
-//load the encrypted TLE login info
+// load the encrypted TLE login info
 var loadTLESecretFile = function() {
 	return new Promise(function(resolve, reject) {
 		//var encryptedSecret = fs.readFileSync(tleSecretPath);
@@ -148,14 +148,14 @@ var loadTLESecretFile = function() {
 	});
 }
 
-//get TLE data
+// get TLE data
 var getTLEs = function(secret) {
 	return new Promise(function(resolve, reject) {
 		var tleQueryURL = tleProtocol + '://' + tleServer + tleQueryURI;
 		var tleLoginURL = tleProtocol + '://' + tleServer + tleLoginURI;
 
-		//throttle request rate
-		//!!! check and make sure this is actually throttling
+		// throttle request rate
+		// !!! check and make sure this is actually throttling
 		bucket.removeTokens(1, function() {
 			request.post({
 				'url': tleLoginURL,
@@ -180,6 +180,7 @@ var getTLEs = function(secret) {
 	});
 };
 
+// transfer TLE data to file in S3
 var saveTLEs = function(tleData) {
 	return new Promise(function(resolve, reject) {
 		s3.putObject({
@@ -199,7 +200,7 @@ var saveTLEs = function(tleData) {
 	});
 };
 
-//Move fresh TLE data from source and store on S3
+// Move fresh TLE data from source and store on S3
 var handleTLETransfer = function() {
 	return new Promise(function(resolve, reject) {
 		getTLESecret()
@@ -219,7 +220,7 @@ var handleTLETransfer = function() {
 	});
 };
 
-//get SATCAT data (from another source: it's much faster)
+// get SATCAT data (from another source: it's much faster)
 var getSATCAT = function() {
 	return new Promise(function(resolve, reject) {
 		request({
@@ -239,6 +240,7 @@ var getSATCAT = function() {
 	});
 };
 
+// transfer SATCAT data to file in S3
 var saveSATCAT = function(satcatData) {
 	return new Promise(function(resolve, reject) {
 		s3.putObject({
@@ -258,7 +260,7 @@ var saveSATCAT = function(satcatData) {
 	});
 };
 
-//Move fresh SATCAT data from source and store on S3
+// Move fresh SATCAT data from source and store on S3
 var handleSATCATTransfer = function() {
 	return new Promise(function(resolve, reject) {
 		getSATCAT()
@@ -275,7 +277,7 @@ var handleSATCATTransfer = function() {
 	});
 };
 
-//clear out working frames from the last render to start fresh
+// clear out working frames from the last render to start fresh
 var clearOldAnimationFrames = function() {
 	return new Promise(function(resolve, reject) {
 		console.log('old animation frames cleared');
@@ -283,7 +285,7 @@ var clearOldAnimationFrames = function() {
 	});
 };
 
-//purge SQS queue to start
+// purge SQS queue to start
 var resetSQS = function() {
 	return new Promise(function(resolveSQS, rejectSQS) {
 		var params = {
@@ -303,8 +305,8 @@ var resetSQS = function() {
 	});
 };
 
-//fill the SQS queue with instructions to render each frame (VMs "take a number")
-//and add a final instruction to compile the animation
+// fill the SQS queue with instructions to render each frame (VMs "take a number")
+// and add a final instruction to compile the animation
 var fillSQS = function() {
 	return new Promise(function(resolve, reject) {
 		var i, message, entries = [], batches = [], id, batchPromises = [];
@@ -359,7 +361,7 @@ var prepSQSEntry = function(message, id) {
 	}
 }
 
-//send up to 10 SQS messages at a time to SQS queue
+// send up to 10 SQS messages at a time to SQS queue
 var sendSQSBatch = function(sqsItems) {
 	var params = {
 		Entries: sqsItems,
@@ -369,12 +371,12 @@ var sendSQSBatch = function(sqsItems) {
 	return sqs.sendMessageBatch(params).promise();
 };
 
-//halt related VMs (if there any) prior to launching more to handle SQS queue
+// halt related VMs (if there any) prior to launching more to handle SQS queue
 var dismissVMArmy = function() {
 	return new Promise(function(resolve, reject) {
 		var dismissedInstances = [];
 
-		//describe instances
+		// describe instances
 		var params = {};
 
 		ec2.describeInstances(params, function(error, data) {
@@ -383,7 +385,7 @@ var dismissVMArmy = function() {
 				console.log(error);
 				reject(error);
 			} else {
-				//find tagged instances to terminate
+				// find tagged instances to terminate
 				data.Reservations.map(function(reservation) {
 					reservation.Instances.map(function(instance) {
 						instance.Tags.map(function(tag) {
@@ -394,7 +396,7 @@ var dismissVMArmy = function() {
 					});
 				});
 
-				//terminate the tagged instances
+				// terminate the tagged instances
 				if(dismissedInstances.length > 0) {
 					var params = {
 						InstanceIds: dismissedInstances
@@ -419,14 +421,14 @@ var dismissVMArmy = function() {
 	});
 };
 
-//launch VMs that will process SQS queue items
+// launch VMs that will process SQS queue items
 var deployVMArmy = function() {
 	return new Promise(function(resolve, reject) {
 		
 		var params = {
 			ImageId: ec2ImageID,
 			InstanceType: ec2InstanceType,
-			DryRun: false, //true to test but not do anything, will result in an error saying it would work
+			DryRun: false, // true to test but not do anything, will result in an error saying it would work
 			InstanceInitiatedShutdownBehavior: 'terminate',
 			SubnetId: ec2SubnetID,
 			UserData: '',
