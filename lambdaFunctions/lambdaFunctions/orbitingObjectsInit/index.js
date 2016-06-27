@@ -93,7 +93,6 @@ exports.handler = function (event, context) {
 			console.log("exports.handler promise chain failed", error);
 			context.fail(error);
 		});
-
 	} catch(error) {
 		console.log('exports.handler failed', error);
 		context.fail("Exception: " + error);
@@ -369,15 +368,99 @@ var sendSQSBatch = function(sqsItems) {
 //halt related VMs (if there any) prior to launching more to handle SQS queue
 var dismissVMArmy = function() {
 	return new Promise(function(resolve, reject) {
-		console.log('VM army dismissed');
-		resolve('VM army dismissed');
+		var dismissedInstances = [];
+
+		//describe instances
+		var params = {};
+
+		ec2.describeInstances(params, function(error, data) {
+			if(error) {
+				console.log('ec2.describeInstances failed');
+				console.log(error);
+				reject(error);
+			} else {
+				//find tagged instances to terminate
+				data.Reservations.map(function(reservation) {
+					reservation.Instances.map(function(instance) {
+						instance.Tags.map(function(tag) {
+							if(tag.Key == "Role" && tag.Value == "OrbitingObjectDatasetGenerator") {
+								dismissedInstances.push(instance.InstanceId);
+							}
+						});
+					});
+				});
+
+				//terminate the tagged instances
+				if(dismissedInstances.length > 0) {
+					var params = {
+						InstanceIds: dismissedInstances
+					};
+
+					ec2.terminateInstances(params, function(error, data) {
+						if (error) {
+							console.log('ec2.terminateInstances failed');
+							console.log(error);
+							reject(error);
+						} else {
+							console.log('VM army dismissed');
+							resolve('VM army dismissed');
+						}
+					});
+				} else {
+					console.log('no VM arm to dismiss, moving on...');
+					resolve('no VM arm to dismiss, moving on...');
+				}
+			}
+		});
 	});
 };
 
 //launch VMs that will process SQS queue items
 var deployVMArmy = function() {
 	return new Promise(function(resolve, reject) {
-		console.log('VM army deployed');
-		resolve('VM army deployed');
+		
+		var params = {
+			ImageId: 'ami-fce3c696', // Ubuntu Server 14.04 LTS (HVM), SSD Volume Type
+			InstanceType: 't2.small',
+			DryRun: false, //true to test but not do anything, will result in an error saying it would work
+			InstanceInitiatedShutdownBehavior: 'terminate',
+			SubnetId: 'subnet-e39e5a94', //found this when setting up manually, gotta be a better way
+			UserData: '',
+			IamInstanceProfile: {
+				Arn: 'arn:aws:iam::631764164204:instance-profile/sosDatasetGeneratorEC2'
+			},
+			MinCount: 1, MaxCount: 1
+		};
+
+		// Create the instance(s)
+		ec2.runInstances(params, function(error, data) {
+			if (error) {
+				console.log('ec2.runInstances failed');
+				console.log(error);
+				reject(error);
+			}
+
+			var instanceId = data.Instances[0].InstanceId;
+			console.log("Created instance", instanceId);
+
+			// Add tags to the instance
+			params = {
+				Resources: [instanceId], 
+				Tags: [
+					{Key: 'Role', Value: 'OrbitingObjectDatasetGenerator'}
+				]
+			};
+			ec2.createTags(params, function(error) {
+				if(error) {
+					console.log('ec2.createTags failed');
+					console.log(error);
+					reject(error);
+				} else {
+					console.log('VM army deployed');
+					resolve('VM army deployed');
+				}
+			});
+		});
+		
 	});
 };
