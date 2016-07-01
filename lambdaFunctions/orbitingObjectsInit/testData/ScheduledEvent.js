@@ -3,7 +3,7 @@
 
 // To use: 
 // cd lambdaFuncitons/alexaISSGetTLEs
-// lambda-local -l index.js -h handler -t 30 -e testData/ScheduledEvent.js 
+// lambda-local -l index.js -h handler -t 300 -e testData/ScheduledEvent.js 
 
 module.exports = {
   "account": "123456789012",
