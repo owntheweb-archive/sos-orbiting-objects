@@ -1,4 +1,5 @@
+lambdaFunctions/orbitingObjectsInit/encrypted-secret
 lambdaFunctions/orbitingObjectsInit/node_modules/*
+s3/build/scripts/node_modules/*
 s3/data/satcat.txt
 s3/data/tles.txt
-lambdaFunctions/orbitingObjectsInit/encrypted-secret
