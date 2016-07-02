@@ -1,0 +1,13 @@
+name = {OBJECT_COUNT} Orbiting Objects at 30X Speed ({DATE})
+creator = Space Foundation
+publisher = Space Foundation
+category = atmosphere
+majorcategory = Space
+data = orbiting_objects_altitude.mp4
+fps = 30
+
+pip = keyActive.png
+pipheight = 9.32
+piphorizontal = 28.22
+pipwidth = 46.32
+pipvertical = -18.07

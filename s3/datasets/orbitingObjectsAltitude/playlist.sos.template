@@ -1,0 +1,14 @@
+name = {OBJECT_COUNT} Orbiting Objects: Active: 30X Speed ({DATE})
+creator = Space Foundation
+publisher = Space Foundation
+category = atmosphere
+majorcategory = Space
+data = orbiting_objects_active.mp4
+fps = 30
+
+pip = keyAltitude.png
+pipheight = 17.63
+piphorizontal = 23.60
+pipwidth = 87.61
+pipvertical = -31.00
+
