@@ -2,15 +2,24 @@
 
 #this script will be loaded into the Lambda init function, base-64 encoded, then passed on to all the VMs to run when they launch
 
+cd /home/ubuntu
 sudo apt-get update -y
+sudo apt-get install awscli -y
 sudo apt-get install blender -y
+#install nodejs v. 4.x, not 0.x:
+curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
 sudo apt-get install nodejs -y
-#todo: download assets from s3 (finish scripts in another feature branch)
+sudo apt-get install npm -y
+aws s3 sync s3://sosorbitingobjects/ /home/ubuntu/ --region 'us-east-1' --exclude "datasets*"
+cd /home/ubuntu/build/scripts/
+npm install aws-sdk promise shelljs
+export AWS_REGION='us-east-1'
+
+#go!:
+/usr/bin/node /home/ubuntu/build/scripts/index.js
 #todo: run a successful test for a blank scene frame render
 #todo: run a successful test for a frame with sat data
 #todo: deliver frames to S3
-#todo: mark item off in the queue and request another
-#todo: terminate if nothing is available in the queue
 #todo: if grabbing last item in the queue (maybe a special instruction item), wait a while, collect frames, render final animation, create dataset, deliver dataset to S3 as a .zip, notify interested people (whew!)
 
 #TEMP: terminate to complete this first test
